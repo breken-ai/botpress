@@ -285,6 +285,31 @@ describe.concurrent('objects', () => {
     await assert.expectTypescript(typings).toMatchWithoutFormatting('type MyObject = { a: number; b: string };')
   })
 
+  it('intersection with a union operand keeps the union grouped', async () => {
+    const schema = z
+      .discriminatedUnion('kind', [z.object({ kind: z.literal('a') }), z.object({ kind: z.literal('b') })])
+      .and(z.object({ id: z.string() }))
+      .title('MyIntersection')
+
+    const typings = toTs(schema, { declaration: 'type' })
+
+    await assert
+      .expectTypescript(typings)
+      .toMatchWithoutFormatting("type MyIntersection = ({ kind: 'a' } | { kind: 'b' }) & { id: string };")
+  })
+
+  it('intersection with union and nullable operands on both sides keeps them grouped', async () => {
+    const schema = z
+      .intersection(z.object({ a: z.string() }).nullable(), z.union([z.object({ b: z.number() }), z.string()]))
+      .title('MyIntersection')
+
+    const typings = toTs(schema, { declaration: 'type' })
+
+    await assert
+      .expectTypescript(typings)
+      .toMatchWithoutFormatting('type MyIntersection = ({ a: string } | null) & ({ b: number } | string);')
+  })
+
   it('normal object', async () => {
     const obj = z.object({ a: z.number(), b: z.string() }).title('MyObject')
 

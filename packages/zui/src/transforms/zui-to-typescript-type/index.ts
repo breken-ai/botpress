@@ -119,6 +119,11 @@ function _toTypescriptType(schema: z.ZodType, path: PropertyPath, options: Types
 
 const _optionalKey = (key: string): string => (key.endsWith('?') ? key : `${key}?`)
 
+const UNION_LIKE_TYPES: string[] = ['ZodUnion', 'ZodDiscriminatedUnion', 'ZodOptional', 'ZodNullable', 'ZodFunction']
+
+const _groupIntersectionOperand = (schema: z.ZodType, typings: string): string =>
+  UNION_LIKE_TYPES.includes(schema.typeName) ? `(${typings})` : typings
+
 function sUnwrapZod(
   schema: z.ZodType | KeyValue | FnParameters | Declaration | null,
   path: PropertyPath,
@@ -289,8 +294,12 @@ ${options.join(' | ')}`
       return `${getMultilineComment(s.description)}
 ${opts.join(' | ')}`
 
-    case 'ZodIntersection':
-      return `${sUnwrapZod(s._def.left, path.withIndexType('number', 0), newConfig)} & ${sUnwrapZod(s._def.right, path.withIndexType('number', 1), newConfig)}`
+    case 'ZodIntersection': {
+      // `&` binds tighter than `|` and `=>`, so union-like operands must be grouped
+      const left = sUnwrapZod(s._def.left, path.withIndexType('number', 0), newConfig)
+      const right = sUnwrapZod(s._def.right, path.withIndexType('number', 1), newConfig)
+      return `${_groupIntersectionOperand(s._def.left, left)} & ${_groupIntersectionOperand(s._def.right, right)}`
+    }
 
     case 'ZodTuple':
       if (s._def.items.length === 0) {
