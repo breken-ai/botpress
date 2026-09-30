@@ -38,7 +38,7 @@ export const stringJSONSchemaToZuiString = ({
   } else if (format === 'ipv4' || pattern === zodPatterns.ipv4) {
     zodString = zodString.ip()
   } else if (format === 'ipv6' || pattern === zodPatterns.ipv6) {
-    zodString = zodString.ip('v6')
+    zodString = zodString.ip({ version: 'v6' })
   } else if (format === 'uri') {
     zodString = zodString.url()
   } else if (format === 'uuid' || pattern === zodPatterns.uuid) {

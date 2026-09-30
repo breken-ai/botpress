@@ -37,6 +37,15 @@ describe.concurrent('zuifromJSONSchemaNext', () => {
     assert(zSchema).toEqual(expected)
   })
 
+  test('should map StringSchema with ipv6 format to an IPv6-only ZodString', () => {
+    const jSchema = buildSchema({ type: 'string', format: 'ipv6' })
+    const zSchema = fromJSONSchema(jSchema)
+    expect(zSchema.safeParse('6097:adfa:6f0b:220d:db08:5021:6191:7990').success).toBe(true)
+    expect(zSchema.safeParse('254.164.77.1').success).toBe(false)
+    const expected = z.string().ip({ version: 'v6' })
+    assert(zSchema).toEqual(expected)
+  })
+
   test('should map NumberSchema to ZodNumber', () => {
     const jSchema = buildSchema({ type: 'number' })
     const zSchema = fromJSONSchema(jSchema)
